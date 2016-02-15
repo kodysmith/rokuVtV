@@ -1,0 +1,15 @@
+title=vtv
+subtitle=Vietnamese tv
+major_version=1
+minor_version=0
+build_version=3
+mm_icon_focus_hd=pkg:/images/vtv3362110.png
+mm_icon_side_hd=pkg:/images/vtv10869.png
+mm_icon_focus_sd=pkg:/images/vtv10869.png
+mm_icon_side_sd=pkg:/images/vtv8046.png
+screensaver_title=Vtv
+screensaver_private=1
+splash_screen_sd=pkg:/images/vtv10869.png
+splash_screen_hd=pkg:/images/vtv3362110.png
+splash_color=#fcfff9
+splash_min_time=2
