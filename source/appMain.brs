@@ -41,7 +41,11 @@ Sub Main()
                Length:1972
                Categories:["Technology","Talk"]
                Title:"Craig Venter asks, Can we create new life out of our digital universe?"
+               urls: "http://video.ted.com/talks/podcast/CraigVenter_2008_480.mp4"
+               StreamFormat: "mp4"
+               srt: "http://dotsub.com/media/f65605d0-c4f6-4f13-a685-c6b96fba03d0/c/eng/srt"
                }
+
 
     item = {   ContentType:"episode"
                SDPosterUrl:"file://pkg:/images/BigBuckBunny.jpg"
@@ -58,15 +62,14 @@ Sub Main()
                Title:"Big Buck Bunny"
             }
 
-    'showSpringboardScreen(itemVenter)  'uncomment this line and comment out the next to see the old mpeg4 example
+    showSpringboardScreen(itemVenter)  'uncomment this line and comment out the next to see the old mpeg4 example
    'showSpringboardScreen(itemMpeg4)  'uncomment this line and comment out the next to see the old mpeg4 example
    'showSpringboardScreen(item)
-    showListScreen()
+    
     'exit the app gently so that the screen doesn't flash to black
     screenFacade.showMessage("")
     sleep(25)
 End Sub
-
 
 '*************************************************************
 '** Set the configurable theme attributes for the application
@@ -130,7 +133,7 @@ Function showSpringboardScreen(item as object) As Boolean
             else if msg.isButtonPressed()
                     print "Button pressed: "; msg.GetIndex(); " " msg.GetData()
                     if msg.GetIndex() = 1
-                         displayVideo()
+                         displayVideo(item)
                     else if msg.GetIndex() = 2
                          return true
                     endif
@@ -144,5 +147,90 @@ Function showSpringboardScreen(item as object) As Boolean
 
 
     return true
+End Function
+
+'*************************************************************
+'** displayVideo()
+'*************************************************************
+
+Function displayVideo(videoJson)
+    print "Displaying video: "
+    p = CreateObject("roMessagePort")
+    video = CreateObject("roVideoScreen")
+    video.setMessagePort(p)
+
+    'bitrates  = [0]          ' 0 = no dots, adaptive bitrate
+    'bitrates  = [348]    ' <500 Kbps = 1 dot
+    'bitrates  = [664]    ' <800 Kbps = 2 dots
+    'bitrates  = [996]    ' <1.1Mbps  = 3 dots
+    'bitrates  = [2048]    ' >=1.1Mbps = 4 dots
+    bitrates  = [0]    
+
+    'Swap the commented values below to play different video clips...
+    urls = [videoJson.urls]
+    qualities = ["HD"]
+    StreamFormat = videoJson.StreamFormat
+    title = videoJson.Title
+    srt = videoJson.srt
+
+    'urls = ["http://video.ted.com/talks/podcast/DanGilbert_2004_480.mp4"]
+    'qualities = ["HD"]
+    'StreamFormat = "mp4"
+    'title = "Dan Gilbert asks, Why are we happy?"
+
+    ' Apple's HLS test stream
+    'urls = ["http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8"]
+    'qualities = ["SD"]
+    'streamformat = "hls"
+    'title = "Apple BipBop Test Stream"
+
+    ' Big Buck Bunny test stream from Wowza
+    'urls = ["http://ec2-174-129-153-104.compute-1.amazonaws.com:1935/vod/smil:BigBuckBunny.smil/playlist.m3u8"]
+    'qualities = ["SD"]
+    'streamformat = "hls"
+    'title = "Big Buck Bunny"
+    
+    videoclip = CreateObject("roAssociativeArray")
+    videoclip.StreamBitrates = bitrates
+    videoclip.StreamUrls = urls
+    videoclip.StreamQualities = qualities
+    videoclip.StreamFormat = streamformat
+    videoclip.Title = title
+    print "srt = ";srt
+    if srt <> invalid and srt <> "" then
+        videoclip.SubtitleUrl = srt
+    end if
+    
+
+    
+    video.SetContent(videoclip)
+    video.show()
+
+    lastSavedPos   = 0
+    statusInterval = 10 'position must change by more than this number of seconds before saving
+
+    while true
+        msg = wait(0, video.GetMessagePort())
+        if type(msg) = "roVideoScreenEvent"
+            if msg.isScreenClosed() then 'ScreenClosed event
+                print "Closing video screen"
+                exit while
+            else if msg.isPlaybackPosition() then
+                nowpos = msg.GetIndex()
+                if nowpos > 10000
+                    
+                end if
+                if nowpos > 0
+                    if abs(nowpos - lastSavedPos) > statusInterval
+                        lastSavedPos = nowpos
+                    end if
+                end if
+            else if msg.isRequestFailed()
+                print "play failed: "; msg.GetMessage()
+            else
+                print "Unknown event: "; msg.GetType(); " msg: "; msg.GetMessage()
+            endif
+        end if
+    end while
 End Function
 
